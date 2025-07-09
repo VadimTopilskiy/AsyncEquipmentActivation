@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+
+  service_b:
+    build: ./service_B
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./certs:/certs
+    depends_on:
+      - rabbitmq
+
+  service_a:
+    build: ./service_A
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./certs:/certs
+
+  worker:
+    build: ./worker
+    depends_on:
+      - rabbitmq
+      - service_a
